@@ -1,49 +1,59 @@
 pipeline {
     agent any
-    
+
     environment {
-        AWS_DEFAULT_REGION = "ap-south-1"
-        EKS_CLUSTER_NAME = "my-small-cluster"
-        DOCKER_CREDENTIALS_ID = "docker-credentials"
-        GITHUB_CREDENTIALS_ID = "github-credentials"
+        DOCKER_IMAGE = 'deveshrathore13/nodejs-dynamic-website:v1.0'
+        AWS_REGION = 'ap-south-1'
+        EKS_CLUSTER_NAME = 'my-small-cluster'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: "${GITHUB_CREDENTIALS_ID}", url: 'git@github.com:deveshrathore13/nodejs-dynamic-website.git'
+                checkout scm
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("deveshrathore13/nodejs-dynamic-website:latest")
+                    docker.build("${DOCKER_IMAGE}")
                 }
             }
         }
-        
+
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("deveshrathore13/nodejs-dynamic-website:latest").push("latest")
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials-id') {
+                        docker.image("${DOCKER_IMAGE}").push('latest')
                     }
                 }
             }
         }
-        
+
         stage('Deploy to EKS') {
             steps {
                 script {
-                    // Use AWS CLI to update the Kubernetes deployment with the new image
-                    sh """
-                    aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                    kubectl set image deployment/nodejs-app nodejs-app=deveshrathore13/nodejs-dynamic-website:latest
-                    """
+                    // Configure AWS CLI
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-credentials-id') {
+                        sh 'aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}'
+                    }
+
+                    // Deploy to EKS
+                    sh 'kubectl apply -f k8s/deployment.yaml'
+                    sh 'kubectl apply -f k8s/service.yaml'
                 }
             }
         }
     }
+
+    post {
+        always {
+            // Clean up workspace
+            cleanWs()
+        }
+    }
 }
+
 
