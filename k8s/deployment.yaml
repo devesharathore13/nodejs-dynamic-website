@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nodejs-app
+  name: my-nodejs-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: nodejs-app
+      app: my-nodejs-app
   template:
     metadata:
       labels:
-        app: nodejs-app
+        app: my-nodejs-app
     spec:
       containers:
-        - name: nodejs-app
-          image: "deveshrathore13/nodejs-dynamic-website:latest"
-          ports:
-            - containerPort: 3000
+      - name: nodejs-app
+        image: deveshrathore13/nodejs-dynamic-website:v1.0
+        ports:
+        - containerPort: 4000
