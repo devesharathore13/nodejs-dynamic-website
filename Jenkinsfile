@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'deveshrathore13/nodejs-dynamic-website:v1.0'
+        DOCKER_IMAGE = 'deveshrathore13/nodejs-dynamic-website:latest'
         AWS_REGION = 'ap-south-1'
         EKS_CLUSTER_NAME = 'my-small-cluster'
     }
@@ -35,12 +35,9 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 script {
-                    // Configure AWS CLI
                     withAWS(region: "${AWS_REGION}", credentials: 'aws-credentials-id') {
                         sh 'aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME}'
                     }
-
-                    // Deploy to EKS
                     sh 'kubectl apply -f k8s/deployment.yaml'
                     sh 'kubectl apply -f k8s/service.yaml'
                 }
@@ -50,7 +47,6 @@ pipeline {
 
     post {
         always {
-            // Clean up workspace
             cleanWs()
         }
     }
