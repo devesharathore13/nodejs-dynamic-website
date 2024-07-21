@@ -1,3 +1,18 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = "ap-south-1"
+        EKS_CLUSTER_NAME = "my-small-cluster"
+        DOCKER_IMAGE = "deveshrathore13/nodejs-dynamic-website:latest"
+        GITHUB_CREDENTIALS_ID = "github-credentials"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'git@github.com:deveshrathore13/nodejs-dynamic-website.git', credentialsId: "${GITHUB_CREDENTIALS_ID}"
+            }
         }
 
         stage('Build Docker Image') {
